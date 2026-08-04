@@ -2,8 +2,8 @@ import { User } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import chalk from 'chalk';
 import { signupSchema } from '../schemas/auth.schema.js';
-import { generateToken } from '../lib/generateToken.js';
-export const signup = async (req, res) => {
+import { generateTokenAndSetCookie} from '../lib/generateToken.js';
+export const signup = async (req, res,next) => {
   try {
     //? validation of the request body
 
@@ -12,7 +12,7 @@ export const signup = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: validate.error.issues[0].message,
-        errors: validation.error.flatten().fieldErrors,
+        errors: validate.error.flatten().fieldErrors,
       });
     }
     const { name, username, email, password } = validate.data;
@@ -33,7 +33,10 @@ export const signup = async (req, res) => {
     const user = new User({ name, username, email, password });
     await user.save();
     //? generate jwt token and set the cookie
-    generateTokenAndSetCookie({ userId: user._id }, 200, res);
+    await generateTokenAndSetCookie(user._id, res);
+    return res
+      .status(201)
+      .json({ success: true, message: 'User registered successfully', user });
   } catch (error) {
     console.log(chalk.red(error));
     return res.status(500).json({ success: false, message: error.message });

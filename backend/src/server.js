@@ -18,7 +18,6 @@ app.use(morgan('dev'));
 
 //? Routes
 app.use('/api/v1/auth', authRouter);
-app.use();
 
 //? Server
 const startServer = async () => {

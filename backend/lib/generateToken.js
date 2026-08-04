@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-export const generateTokenAndSetCookie = async (userId, statusCode, res) => {
+export const generateTokenAndSetCookie = async (userId, res) => {
   try {
     const token = await jwt.sign({ userId }, process.env.JWT_SECRET, {
       expiresIn: '1d',
@@ -11,10 +11,10 @@ export const generateTokenAndSetCookie = async (userId, statusCode, res) => {
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000,
     });
-    res.status(statusCode).json({ success: true, token });
+    return token;
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    throw error;
   }
 };
 
