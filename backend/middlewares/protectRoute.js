@@ -1,5 +1,5 @@
 import { User } from '../models/user.model.js';
-import { verifyToken } from '../lib/generateToken.js';
+import { verifyToken } from '../lib/token.js';
 
 export const protectRoute = async (req, res, next) => {
   const token = req.cookies.jwt_linkedin;

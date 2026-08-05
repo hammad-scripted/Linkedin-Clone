@@ -2,7 +2,7 @@ import { User } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import chalk from 'chalk';
 import { signupSchema, signinSchema } from '../schemas/auth.schema.js';
-import { generateTokenAndSetCookie } from '../lib/generateToken.js';
+import { generateTokenAndSetCookie } from '../lib/token.js';
 import { sendWelcomeEmail } from '../emails/emailHandlers.js';
 
 export const signup = async (req, res, next) => {
