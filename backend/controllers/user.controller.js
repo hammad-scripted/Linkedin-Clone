@@ -11,7 +11,7 @@ export const getSuggestedConnections = async (req, res) => {
     }
 
     //? get all users except the current user and which are not friends with the current user
-    
+
     const suggestedUsers = await User.find({
       _id: { $ne: currentUser._id, $nin: currentUser.connections },
     })
@@ -42,5 +42,33 @@ export const getPublicProfile = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const allowedFields = [
+      'name', 'headline', 'about', 'location',
+      'profilePicture', 'bannerImg', 'skills', 
+      'experience', 'education',
+    ];
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    //? Assign only allowed fields to the user document
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+    //todo : check for the bannerImg and profilePicture field to upload to cloudinary and then update the field
+    const updatedUser = await user.save();
+    return res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
