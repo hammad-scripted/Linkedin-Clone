@@ -1,5 +1,5 @@
 import { User } from '../models/user.model.js';
-
+import cloudinary from '../lib/cloudinary.js';
 export const getSuggestedConnections = async (req, res) => {
   try {
     const currentUser = await User.findById(req.user._id).select('-password');
@@ -50,7 +50,7 @@ export const updateProfile = async (req, res) => {
     const allowedFields = [
       'name', 'headline', 'about', 'location',
       'profilePicture', 'bannerImg', 'skills', 
-      'experience', 'education',
+      'experience', 'education', 'username'
     ];
 
     const user = await User.findById(req.user._id);
@@ -58,15 +58,35 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    //? Assign only allowed fields to the user document
+    // 1. Handle Cloudinary uploads for images if provided
+    if (req.body.profilePicture && req.body.profilePicture.startsWith('data:image')) {
+      const result = await cloudinary.uploader.upload(req.body.profilePicture, {
+        folder: 'profile_pictures',
+      });
+      user.profilePicture = result.secure_url;
+    }
+
+    if (req.body.bannerImg && req.body.bannerImg.startsWith('data:image')) {
+      const result = await cloudinary.uploader.upload(req.body.bannerImg, {
+        folder: 'banner_images',
+      });
+      user.bannerImg = result.secure_url;
+    }
+
+    // 2. Assign remaining allowed text/array fields to the user document
     allowedFields.forEach((field) => {
+      // Skip profilePicture and bannerImg here since Cloudinary handles them above
+      if (field === 'profilePicture' || field === 'bannerImg') return;
+
       if (req.body[field] !== undefined) {
         user[field] = req.body[field];
       }
     });
-    //todo : check for the bannerImg and profilePicture field to upload to cloudinary and then update the field
+
+    // 3. Save updated document
     const updatedUser = await user.save();
     return res.status(200).json({ success: true, user: updatedUser });
+
   } catch (error) {
     console.error('Error updating profile:', error);
     return res.status(500).json({ success: false, message: 'Internal server error' });

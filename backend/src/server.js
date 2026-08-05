@@ -28,7 +28,7 @@ app.use(
 
 //? Routes
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/user',userRouter)
+app.use('/api/v1/users',userRouter)
 
 //? Error handler
 app.use((err, req, res, next) => {
