@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import morgan from 'morgan';
 import { connectDb } from '../db/connectDb.js';
 import { authRouter } from '../routes/auth.route.js';
+import { userRouter } from '../routes/user.route.js';
 import cookieParser from 'cookie-parser';
 const app = express();
 
@@ -27,6 +28,13 @@ app.use(
 
 //? Routes
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/user',userRouter)
+
+//? Error handler
+app.use((err, req, res, next) => {
+  console.log(err);
+  return res.status(500).json({ success: false, message: err.message });
+});
 
 //? Server
 const startServer = async () => {
