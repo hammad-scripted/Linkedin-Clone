@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import morgan from 'morgan';
 import { connectDb } from '../db/connectDb.js';
 import { authRouter } from '../routes/auth.route.js';
+import cookieParser from 'cookie-parser';
 const app = express();
 
 const PORT = process.env.PORT || 5000;
@@ -15,6 +16,14 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json({ limit: '50mb' })); //* to parse json
 app.use(express.urlencoded({ extended: true })); //* to parse urlencoded
 app.use(morgan('dev'));
+app.use(
+  cookieParser(process.env.JWT_SECRET, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000,
+  }),
+);
 
 //? Routes
 app.use('/api/v1/auth', authRouter);

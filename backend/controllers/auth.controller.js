@@ -56,13 +56,11 @@ export const signup = async (req, res, next) => {
 export const login = async (req, res) => {
   const result = signinSchema.safeParse(req.body);
   if (!result.success) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: result.error.issues[0].message,
-        errors: result.error.flatten().fieldErrors,
-      });
+    return res.status(400).json({
+      success: false,
+      message: result.error.issues[0].message,
+      errors: result.error.flatten().fieldErrors,
+    });
   }
 
   // safe payload
@@ -108,5 +106,25 @@ export const logout = (req, res) => {
   } catch (error) {
     console.log(chalk.red(error));
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized request, user not found!',
+      });
+    }
+
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json({ success: false, message: 'Internal server error' });
   }
 };

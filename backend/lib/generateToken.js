@@ -1,3 +1,5 @@
+import {config} from 'dotenv';
+config();
 import jwt from 'jsonwebtoken';
 
 export const generateTokenAndSetCookie = async (userId, res) => {
@@ -18,13 +20,13 @@ export const generateTokenAndSetCookie = async (userId, res) => {
   }
 };
 
-export const verifyToken = async function name() {
+export const verifyToken = async (token) => {
   try {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     return decoded;
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+
     return null;
   }
 };
