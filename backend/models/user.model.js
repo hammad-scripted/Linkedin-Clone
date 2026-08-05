@@ -55,8 +55,7 @@ const userSchema = new Schema(
       { school: String, fieldOfStudy: String, startYear: Date, endYear: Date },
     ],
     connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    // following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    // followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    
   },
   { timestamps: true },
 );
