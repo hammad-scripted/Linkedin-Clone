@@ -1,7 +1,7 @@
 
 import {sender,mailtrapClient} from '../lib/mailtrap.js';
-
-export const sendWelcomeEmail=(email,name,profilePictureUrl)=>{
+import {createWelcomeEmailTemplate} from '../emails/emailTemplates.js';
+export const sendWelcomeEmail= async (email,name,profilePictureUrl)=>{
     const recipient = [{ email }];
     try {
         const response=await mailtrapClient.send({
@@ -12,7 +12,7 @@ export const sendWelcomeEmail=(email,name,profilePictureUrl)=>{
         })
         console.log(`Welcome email sent to ${email} successfully`,response);
     } catch (error) {
-        
+        console.log(error);
     }
     
 }

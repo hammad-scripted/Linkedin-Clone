@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import chalk from 'chalk';
 import { signupSchema } from '../schemas/auth.schema.js';
 import { generateTokenAndSetCookie} from '../lib/generateToken.js';
+import {sendWelcomeEmail} from "../emails/emailHandlers.js"
 export const signup = async (req, res,next) => {
   try {
     //? validation of the request body
@@ -35,13 +36,13 @@ export const signup = async (req, res,next) => {
     //? generate jwt token and set the cookie
     await generateTokenAndSetCookie(user._id, res);
     //? send welcome email
-    const profilePictureUrl=process.env.CLIENT_URL+"/profile/"+user.username;
-    try{
-        await sendWelcomeEmail(user.email,user.name,profilePictureUrl);
-    }catch(error){
-        console.log(`Error sending email`,error);
-        res.status(500).json({ success: false, message: error.message });
+    const profilePictureUrl = process.env.CLIENT_URL + '/profile/' + user.username;
+    try {
+      await sendWelcomeEmail(user.email, user.name, profilePictureUrl);
+    } catch (error) {
+      console.log('Error sending email', error);
     }
+
     return res
       .status(201)
       .json({ success: true, message: 'User registered successfully', user });
