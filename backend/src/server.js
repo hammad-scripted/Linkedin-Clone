@@ -9,6 +9,8 @@ import { connectDb } from '../db/connectDb.js';
 import { authRouter } from '../routes/auth.route.js';
 import { userRouter } from '../routes/user.route.js';
 import { postRouter } from '../routes/post.route.js';
+import { notificationRouter } from '../routes/notifications.route.js';
+import { connectionRouter } from '../routes/connections.route.js';
 import cookieParser from 'cookie-parser';
 const app = express();
 
@@ -29,8 +31,10 @@ app.use(
 
 //? Routes
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/users',userRouter)
-app.use('/api/v1/posts',postRouter);
+app.use('/api/v1/users', userRouter);
+app.use('/api/v1/posts', postRouter);
+app.use('/api/v1/notifications', notificationRouter);
+app.use('/api/v1/connections', connectionRouter);
 
 //? Error handler
 app.use((err, req, res, next) => {
