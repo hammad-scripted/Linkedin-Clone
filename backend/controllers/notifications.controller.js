@@ -3,7 +3,7 @@ import { Notification } from '../models/notification.model.js';
 export const getUserNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user._id })
-      .sort('-1')
+      .sort({ _id: -1 })
       .populate('relatedUser', 'username name profilePicture headline')
       .populate('relatedPost', 'content image');
     res.status(200).json({ success: true, notifications });
@@ -21,11 +21,14 @@ export const markNotificationAsRead = async (req, res) => {
     // notification.read=true;
     // await notification.save();
     // res.status(200).json({success:true,notification});
-    const notification = await Notification.findByIdAndUpdate(
+    const notification = await Notification.findOneAndUpdate(
       { _id: id, recipient: req.user._id },
       { read: true },
       { new: true },
     );
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
     return res.status(200).json({ success: true, notification });
   } catch (error) {
     console.log(error);
@@ -36,11 +39,14 @@ export const markNotificationAsRead = async (req, res) => {
 export const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    const notification = await Notification.findByIdAndDelete({
+    const notification = await Notification.findOneAndDelete({
       _id: id,
       recipient: req.user._id,
     });
-    res.status(200).json({ success: true, notification });
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    return res.status(200).json({ success: true, notification });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });

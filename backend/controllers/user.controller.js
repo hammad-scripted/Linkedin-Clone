@@ -12,8 +12,9 @@ export const getSuggestedConnections = async (req, res) => {
 
     //? get all users except the current user and which are not friends with the current user
 
+    const excludedUsers = [currentUser._id, ...currentUser.connections];
     const suggestedUsers = await User.find({
-      _id: { $ne: currentUser._id, $nin: currentUser.connections },
+      _id: { $nin: excludedUsers },
     })
       .select('name username profilePicture headline')
       .limit(5);
@@ -73,6 +74,19 @@ export const updateProfile = async (req, res) => {
       user.bannerImg = result.secure_url;
     }
 
+    if (req.body.username && req.body.username !== user.username) {
+      const usernameTaken = await User.exists({
+        username: req.body.username,
+        _id: { $ne: user._id },
+      });
+      if (usernameTaken) {
+        return res.status(409).json({
+          success: false,
+          message: 'Username is already in use',
+        });
+      }
+    }
+
     // 2. Assign remaining allowed text/array fields to the user document
     allowedFields.forEach((field) => {
       // Skip profilePicture and bannerImg here since Cloudinary handles them above
@@ -85,6 +99,7 @@ export const updateProfile = async (req, res) => {
 
     // 3. Save updated document
     const updatedUser = await user.save();
+    updatedUser.password = undefined;
     return res.status(200).json({ success: true, user: updatedUser });
 
   } catch (error) {

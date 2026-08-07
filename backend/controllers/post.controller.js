@@ -3,7 +3,8 @@ import cloudinary from '../lib/cloudinary.js';
 import { Notification } from '../models/notification.model.js';
 export const getFeedPosts = async (req, res) => {
   try {
-    const posts = await Post.find({ author: { $in: req.user.connections } })
+    const feedAuthors = [...req.user.connections, req.user._id];
+    const posts = await Post.find({ author: { $in: feedAuthors } })
       .populate('author', 'username name profilePicture headline')
       .populate('comments.user', 'username name profilePicture headline')
       .sort('-createdAt');
@@ -19,6 +20,10 @@ export const getFeedPosts = async (req, res) => {
 export const createPost = async (req, res) => {
   try {
     const { content, image } = req.body;
+
+    if (!content?.trim() && !image) {
+      return res.status(400).json({ success: false, message: 'Post content or image is required' });
+    }
 
     let newPost;
 
@@ -111,18 +116,27 @@ export const createComment = async (req, res) => {
   try {
     const { id: postId } = req.params;
     const { comment } = req.body;
+    if (!comment?.trim()) {
+      return res.status(400).json({ success: false, message: 'Comment is required' });
+    }
     const post = await Post.findByIdAndUpdate(
       postId,
       {
-        $push: { comments: { content: comment, user: req.user._id } },
+        $push: { comments: { content: comment.trim(), user: req.user._id } },
       },
       { new: true },
-    ).populate('author', 'username name profilePicture headline');
+    )
+      .populate('author', 'username name profilePicture headline')
+      .populate('comments.user', 'username name profilePicture headline');
+
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
     //? create notification if the comment owner is not the author of the post
 
-    if (post.author.toString() !== req.user._id.toString()) {
-      const notification = await Notification.create({
-        recipient: post.author,
+    if (post.author._id.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        recipient: post.author._id,
         type: 'comment',
         relatedUser: req.user._id,
         relatedPost: postId,

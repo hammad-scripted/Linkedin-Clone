@@ -5,6 +5,12 @@ import { signupSchema, signinSchema } from '../schemas/auth.schema.js';
 import { generateTokenAndSetCookie } from '../lib/token.js';
 import { sendWelcomeEmail } from '../emails/emailHandlers.js';
 
+const withoutPassword = (user) => {
+  const publicUser = user.toObject();
+  delete publicUser.password;
+  return publicUser;
+};
+
 export const signup = async (req, res, next) => {
   try {
     //? validation of the request body
@@ -47,7 +53,11 @@ export const signup = async (req, res, next) => {
 
     return res
       .status(201)
-      .json({ success: true, message: 'User registered successfully', user });
+      .json({
+        success: true,
+        message: 'User registered successfully',
+        user: withoutPassword(user),
+      });
   } catch (error) {
     console.log(chalk.red(error));
     return res.status(500).json({ success: false, message: error.message });
@@ -90,7 +100,11 @@ export const login = async (req, res) => {
     await generateTokenAndSetCookie(user._id, res);
     return res
       .status(200)
-      .json({ success: true, message: 'User logged in successfully', user });
+      .json({
+        success: true,
+        message: 'User logged in successfully',
+        user: withoutPassword(user),
+      });
   } catch (error) {
     console.log(chalk.red(error));
     return res.status(500).json({ success: false, message: error.message });
