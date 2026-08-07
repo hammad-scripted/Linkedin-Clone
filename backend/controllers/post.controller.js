@@ -52,14 +52,16 @@ export const deletePost = async (req, res) => {
     // 1. Fetch the post
     const post = await Post.findById(postId);
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Post not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Post not found' });
     }
 
     // 2. Authorization check: Ensure the post belongs to the logged-in user
     if (post.author.toString() !== userId.toString()) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Unauthorized: You can only delete your own posts' 
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: You can only delete your own posts',
       });
     }
 
@@ -76,10 +78,48 @@ export const deletePost = async (req, res) => {
     // Optional: Remove post ID reference from User document if your schema tracks user posts
     // await User.findByIdAndUpdate(userId, { $pull: { posts: postId } });
 
-    return res.status(200).json({ success: true, message: 'Post deleted successfully' });
-
+    return res
+      .status(200)
+      .json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error in deletePost controller:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    return res
+      .status(500)
+      .json({ success: false, message: 'Internal server error' });
   }
 };
+
+export const getPostById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const post = await Post.findById(id)
+      .populate('author', 'username name profilePicture headline')
+      .populate('comments.user', 'username name profilePicture headline');
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Post not found' });
+    }
+    return res.status(200).json({ success: true, post });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createComment = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { comment } = req.body;
+    const post = await Post.findByIdAndUpdate(
+      postId,
+      {
+        $push: { comments: { content: comment, user: req.user._id } },
+      },
+      { new: true },
+    ).populate('author', 'username name profilePicture headline');
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+F;
