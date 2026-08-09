@@ -22,6 +22,6 @@ connectionRouter.put(
   protectRoute,
   rejectConnectionRequest,
 );
-connectionRouter.get('/', protectRoute, getAllConnections);
+connectionRouter.get('/requests', protectRoute, getAllConnections);
 connectionRouter.delete('/:userId', protectRoute, deleteConnection);
 connectionRouter.get('/status/:userId', protectRoute, getConnectionStatus);

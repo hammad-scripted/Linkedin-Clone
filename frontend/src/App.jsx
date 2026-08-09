@@ -6,7 +6,7 @@ import SignUpPage from './pages/auth/SignUpPage.jsx';
 import { Toaster, toast } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance } from './lib/axios.js';
-
+import {Loader} from "lucide-react";
 export default function App() {
   const { data: authUser = null, isLoading } = useQuery({
     queryKey: ['authUser'],
@@ -24,7 +24,7 @@ export default function App() {
     retry: false,
   });
 
-  if (isLoading) return null;
+  if (isLoading) return <Loader />;
 
   return (
     <Layout>
