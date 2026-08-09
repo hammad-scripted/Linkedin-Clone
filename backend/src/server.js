@@ -12,6 +12,7 @@ import { postRouter } from '../routes/post.route.js';
 import { notificationRouter } from '../routes/notifications.route.js';
 import { connectionRouter } from '../routes/connections.route.js';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 const app = express();
 
 const PORT = process.env.PORT || 5000;
@@ -26,6 +27,13 @@ app.use(
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 24 * 60 * 60 * 1000,
+  }),
+);
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   }),
 );
 
