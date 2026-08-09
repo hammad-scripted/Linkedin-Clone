@@ -25,6 +25,7 @@ const SignUpForm = () => {
             toast.error(err.response.data.message || "Something went wrong");
         },
     });
+  
 
     const handleSignUp = (e) => {
         e.preventDefault();
