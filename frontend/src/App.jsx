@@ -24,7 +24,7 @@ export default function App() {
     retry: false,
   });
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <Loader className='size-5 animate-spin'/>;
 
   return (
     <Layout>

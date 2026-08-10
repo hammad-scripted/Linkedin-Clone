@@ -22,7 +22,9 @@ export const createPost = async (req, res) => {
     const { content, image } = req.body;
 
     if (!content?.trim() && !image) {
-      return res.status(400).json({ success: false, message: 'Post content or image is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Post content or image is required' });
     }
 
     let newPost;
@@ -117,7 +119,9 @@ export const createComment = async (req, res) => {
     const { id: postId } = req.params;
     const { comment } = req.body;
     if (!comment?.trim()) {
-      return res.status(400).json({ success: false, message: 'Comment is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Comment is required' });
     }
     const post = await Post.findByIdAndUpdate(
       postId,
@@ -130,7 +134,9 @@ export const createComment = async (req, res) => {
       .populate('comments.user', 'username name profilePicture headline');
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Post not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: 'Post not found' });
     }
     //? create notification if the comment owner is not the author of the post
 
@@ -150,4 +156,3 @@ export const createComment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
