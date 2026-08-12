@@ -156,3 +156,35 @@ export const createComment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const likePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, message: 'Post not found' });
+    }
+
+    const isLiked = post.likes.some((like) => like.equals(userId));
+
+    if (isLiked) {
+      post.likes.pull(userId);
+    } else {
+      post.likes.addToSet(userId);
+    }
+
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      liked: !isLiked,
+      post,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

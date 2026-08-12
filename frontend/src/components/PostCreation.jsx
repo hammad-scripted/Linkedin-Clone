@@ -56,7 +56,6 @@ const PostCreation = ({ user }) => {
     }
   };
 
-
   //? converts the image into data url as base64 format
   const readFileAsDataURL = (file) => {
     return new Promise((resolve, reject) => {
