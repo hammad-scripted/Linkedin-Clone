@@ -7,7 +7,7 @@ export const sendConnectionRequest = async (req, res) => {
     const { userId } = req.params;
     const senderId = req.user._id;
 
-    if (senderId.toString() === userId) {
+    if (senderId.toString() === userId.toString()) {
       return res
         .status(400)
         .json({ message: 'You cannot send a connection request to yourself' });
