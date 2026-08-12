@@ -13,7 +13,7 @@ const postSchema = new Schema(
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     comments: [
       {
-        content: { type: String },
+        comment: { type: String },
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },//* owner of the comment
         createdAt: { type: Date, default: Date.now },
       },

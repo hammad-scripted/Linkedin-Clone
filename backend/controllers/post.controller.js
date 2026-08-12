@@ -126,11 +126,11 @@ export const createComment = async (req, res) => {
     const post = await Post.findByIdAndUpdate(
       postId,
       {
-        $push: { comments: { content: comment.trim(), user: req.user._id } },
+        $push: { comments: { comment: comment.trim(), user: req.user._id } },
       },
       { new: true },
     )
-      .populate('author', 'username name profilePicture headline')
+      .populate('author', 'username name profilePicture headline content')
       .populate('comments.user', 'username name profilePicture headline');
 
     if (!post) {
