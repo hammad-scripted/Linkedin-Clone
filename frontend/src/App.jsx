@@ -6,7 +6,8 @@ import SignUpPage from './pages/auth/SignUpPage.jsx';
 import { Toaster, toast } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { axiosInstance } from './lib/axios.js';
-import {Loader} from "lucide-react";
+import { Loader } from 'lucide-react';
+import NotificationsPage from './pages/NotificationsPage.jsx';
 export default function App() {
   const { data: authUser = null, isLoading } = useQuery({
     queryKey: ['authUser'],
@@ -24,7 +25,7 @@ export default function App() {
     retry: false,
   });
 
-  if (isLoading) return <Loader className='size-5 animate-spin'/>;
+  if (isLoading) return <Loader className="size-5 animate-spin" />;
 
   return (
     <Layout>
@@ -40,6 +41,12 @@ export default function App() {
         <Route
           path="/login"
           element={authUser ? <Navigate to="/" replace /> : <LoginPage />}
+        />
+        <Route
+          path="/notifications"
+          element={
+            authUser ? <NotificationsPage /> : <Navigate to="/" replace />
+          }
         />
       </Routes>
       <Toaster />
