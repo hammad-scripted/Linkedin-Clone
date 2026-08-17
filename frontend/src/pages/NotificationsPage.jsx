@@ -17,21 +17,26 @@ const NotificationsPage = () => {
   const queryClient = useQueryClient();
   const authUser = queryClient.getQueryData(['authUser']);
 
-  const { data: notifications = [], isLoading, isError } = useQuery({
+  const {
+    data: notifications = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
       const { data } = await axiosInstance.get('/notifications');
-      return data.notifications;
+      return Array.isArray(data.notifications) ? data.notifications : [];
     },
     enabled: !!authUser,
   });
 
   const { mutate: markAsReadMutation, isPending: isMarkingAsRead } = useMutation({
     mutationFn: (id) => axiosInstance.put(`/notifications/${id}/read`),
-    onSuccess: ({ data }) => {
-      queryClient.setQueryData(['notifications'], (current = []) =>
-        current.map((notification) =>
-          notification._id === data.notification._id
+    onSuccess: (_, notificationId) => {
+      queryClient.setQueryData(['notifications'], (current) =>
+        (Array.isArray(current) ? current : []).map((notification) =>
+          notification._id === notificationId
             ? { ...notification, read: true }
             : notification,
         ),
@@ -45,8 +50,10 @@ const NotificationsPage = () => {
   const { mutate: deleteNotificationMutation, isPending: isDeleting } = useMutation({
     mutationFn: (id) => axiosInstance.delete(`/notifications/${id}`),
     onSuccess: (_, deletedId) => {
-      queryClient.setQueryData(['notifications'], (current = []) =>
-        current.filter((notification) => notification._id !== deletedId),
+      queryClient.setQueryData(['notifications'], (current) =>
+        (Array.isArray(current) ? current : []).filter(
+          (notification) => notification._id !== deletedId,
+        ),
       );
       toast.success('Notification deleted');
     },
@@ -142,7 +149,16 @@ const NotificationsPage = () => {
           {isLoading ? (
             <p>Loading notifications...</p>
           ) : isError ? (
-            <p className="text-red-600">Could not load notifications.</p>
+            <div className="text-center">
+              <p className="text-red-600 mb-3">Could not load notifications.</p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="px-4 py-2 rounded-md bg-primary text-white"
+              >
+                Try again
+              </button>
+            </div>
           ) : notifications.length > 0 ? (
             <ul>
               {notifications.map((notification) => {
@@ -157,11 +173,11 @@ const NotificationsPage = () => {
 
                 return (
                   <li
-                  key={notification._id}
-                  className={`bg-white border rounded-lg p-4 my-4 transition-all hover:shadow-md ${
-                    !notification.read ? 'border-blue-500' : 'border-gray-200'
-                  }`}
-                >
+                    key={notification._id}
+                    className={`bg-white border rounded-lg p-4 my-4 transition-all hover:shadow-md ${
+                      !notification.read ? 'border-blue-500' : 'border-gray-200'
+                    }`}
+                  >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                       {relatedUser?.username ? (
