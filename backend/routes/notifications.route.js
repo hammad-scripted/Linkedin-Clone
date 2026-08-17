@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { protectRoute } from '../middlewares/protectRoute.js';
-import{getUserNotifications,markNotificationAsRead,deleteNotification} from '../controllers/notifications.controller.js'
+import {
+  deleteNotification,
+  getUserNotifications,
+  markNotificationAsRead,
+} from '../controllers/notifications.controller.js';
+
 export const notificationRouter = Router();
 
 notificationRouter.get('/', protectRoute, getUserNotifications);

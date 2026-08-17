@@ -17,25 +17,41 @@ const NotificationsPage = () => {
   const queryClient = useQueryClient();
   const authUser = queryClient.getQueryData(['authUser']);
 
-  const { data: notifications, isLoading } = useQuery({
+  const { data: notifications = [], isLoading, isError } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => axiosInstance.get('/notifications'),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get('/notifications');
+      return data.notifications;
+    },
     enabled: !!authUser,
-    
   });
 
-  const { mutate: markAsReadMutation } = useMutation({
+  const { mutate: markAsReadMutation, isPending: isMarkingAsRead } = useMutation({
     mutationFn: (id) => axiosInstance.put(`/notifications/${id}/read`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+    onSuccess: ({ data }) => {
+      queryClient.setQueryData(['notifications'], (current = []) =>
+        current.map((notification) =>
+          notification._id === data.notification._id
+            ? { ...notification, read: true }
+            : notification,
+        ),
+      );
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Could not mark notification as read');
     },
   });
 
-  const { mutate: deleteNotificationMutation } = useMutation({
+  const { mutate: deleteNotificationMutation, isPending: isDeleting } = useMutation({
     mutationFn: (id) => axiosInstance.delete(`/notifications/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['notifications']);
+    onSuccess: (_, deletedId) => {
+      queryClient.setQueryData(['notifications'], (current = []) =>
+        current.filter((notification) => notification._id !== deletedId),
+      );
       toast.success('Notification deleted');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Could not delete notification');
     },
   });
 
@@ -54,35 +70,34 @@ const NotificationsPage = () => {
   };
 
   const renderNotificationContent = (notification) => {
+    const relatedUser = notification.relatedUser;
+    const name = relatedUser?.name || 'A user';
+    const userName = relatedUser?.username;
+    const actor = userName ? (
+      <Link to={`/profile/${userName}`} className="font-bold">
+        {name}
+      </Link>
+    ) : (
+      <strong>{name}</strong>
+    );
+
     switch (notification.type) {
       case 'like':
         return (
           <span>
-            <strong>{notification.relatedUser.name}</strong> liked your post
+            {actor} liked your post
           </span>
         );
       case 'comment':
         return (
           <span>
-            <Link
-              to={`/profile/${notification.relatedUser.username}`}
-              className="font-bold"
-            >
-              {notification.relatedUser.name}
-            </Link>{' '}
-            commented on your post
+            {actor} commented on your post
           </span>
         );
       case 'connectionAccepted':
         return (
           <span>
-            <Link
-              to={`/profile/${notification.relatedUser.username}`}
-              className="font-bold"
-            >
-              {notification.relatedUser.name}
-            </Link>{' '}
-            accepted your connection request
+            {actor} accepted your connection request
           </span>
         );
       default:
@@ -90,7 +105,6 @@ const NotificationsPage = () => {
     }
   };
 
-  console.log(notifications)
   const renderRelatedPost = (relatedPost) => {
     if (!relatedPost) return null;
 
@@ -127,10 +141,22 @@ const NotificationsPage = () => {
 
           {isLoading ? (
             <p>Loading notifications...</p>
-          ) : notifications && notifications.length > 0 ? (
+          ) : isError ? (
+            <p className="text-red-600">Could not load notifications.</p>
+          ) : notifications.length > 0 ? (
             <ul>
-              {notifications.map((notification) => (
-                <li
+              {notifications.map((notification) => {
+                const relatedUser = notification.relatedUser;
+                const avatar = (
+                  <img
+                    src={relatedUser?.profilePicture || '/avatar.png'}
+                    alt={relatedUser?.name || 'User'}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                );
+
+                return (
+                  <li
                   key={notification._id}
                   className={`bg-white border rounded-lg p-4 my-4 transition-all hover:shadow-md ${
                     !notification.read ? 'border-blue-500' : 'border-gray-200'
@@ -138,18 +164,11 @@ const NotificationsPage = () => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
-                      <Link
-                        to={`/profile/${notification.relatedUser.username}`}
-                      >
-                        <img
-                          src={
-                            notification.relatedUser.profilePicture ||
-                            '/avatar.png'
-                          }
-                          alt={notification.relatedUser.name}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      </Link>
+                      {relatedUser?.username ? (
+                        <Link to={`/profile/${relatedUser.username}`}>{avatar}</Link>
+                      ) : (
+                        avatar
+                      )}
 
                       <div>
                         <div className="flex items-center gap-2">
@@ -176,6 +195,7 @@ const NotificationsPage = () => {
                       {!notification.read && (
                         <button
                           onClick={() => markAsReadMutation(notification._id)}
+                          disabled={isMarkingAsRead}
                           className="p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
                           aria-label="Mark as read"
                         >
@@ -187,6 +207,7 @@ const NotificationsPage = () => {
                         onClick={() =>
                           deleteNotificationMutation(notification._id)
                         }
+                        disabled={isDeleting}
                         className="p-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
                         aria-label="Delete notification"
                       >
@@ -194,8 +215,9 @@ const NotificationsPage = () => {
                       </button>
                     </div>
                   </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p>No notification at the moment.</p>

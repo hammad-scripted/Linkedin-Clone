@@ -3,13 +3,13 @@ import { Notification } from '../models/notification.model.js';
 export const getUserNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user._id })
-      .sort({ _id: -1 })
+      .sort({ createdAt: -1 })
       .populate('relatedUser', 'username name profilePicture headline')
       .populate('relatedPost', 'content image');
-    res.status(200).json({ success: true, notifications });
+    return res.status(200).json({ success: true, notifications });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.error('Error getting notifications:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -17,10 +17,6 @@ export const markNotificationAsRead = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // const notification=await Notification.findById(id);
-    // notification.read=true;
-    // await notification.save();
-    // res.status(200).json({success:true,notification});
     const notification = await Notification.findOneAndUpdate(
       { _id: id, recipient: req.user._id },
       { read: true },
@@ -31,8 +27,8 @@ export const markNotificationAsRead = async (req, res) => {
     }
     return res.status(200).json({ success: true, notification });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.error('Error marking notification as read:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -48,7 +44,7 @@ export const deleteNotification = async (req, res) => {
     }
     return res.status(200).json({ success: true, notification });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
+    console.error('Error deleting notification:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -80,8 +80,11 @@ export const deletePost = async (req, res) => {
       await cloudinary.uploader.destroy(publicId);
     }
 
-    // 4. Delete the post from MongoDB
-    await Post.findByIdAndDelete(postId);
+    // Delete the post and notifications that point to it.
+    await Promise.all([
+      Post.findByIdAndDelete(postId),
+      Notification.deleteMany({ relatedPost: postId }),
+    ]);
 
     // Optional: Remove post ID reference from User document if your schema tracks user posts
     // await User.findByIdAndUpdate(userId, { $pull: { posts: postId } });
@@ -178,6 +181,28 @@ export const likePost = async (req, res) => {
     }
 
     await post.save();
+
+    if (post.author.toString() !== userId.toString()) {
+      if (isLiked) {
+        await Notification.deleteOne({
+          recipient: post.author,
+          type: 'like',
+          relatedUser: userId,
+          relatedPost: post._id,
+        });
+      } else {
+        await Notification.findOneAndUpdate(
+          {
+            recipient: post.author,
+            type: 'like',
+            relatedUser: userId,
+            relatedPost: post._id,
+          },
+          { $set: { read: false } },
+          { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+      }
+    }
 
     return res.status(200).json({
       success: true,

@@ -125,8 +125,8 @@ const Post = ({ post }) => {
             </button>
           )}
         </div>
-        <p className='mb-4'>{post.comment}</p>
-        {post.image && <img src={post.image} alt='Post comment' className='rounded-lg w-full mb-4' />}
+        <p className='mb-4'>{post.content}</p>
+        {post.image && <img src={post.image} alt='Post content' className='rounded-lg w-full mb-4' />}
 
         <div className='flex justify-between text-info'>
           <PostAction
