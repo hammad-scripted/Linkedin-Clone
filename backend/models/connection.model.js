@@ -1,15 +1,14 @@
-import { mongoose } from 'mongoose';
 import { Schema, model } from 'mongoose';
 
 const connectionSchema = new Schema(
   {
     sender: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
     recipient: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },

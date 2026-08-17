@@ -154,8 +154,12 @@ export const deleteConnection = async (req, res) => {
 export const getConnectionStatus = async (req, res) => {
   try {
     const { userId } = req.params;
+
     if (req.user.connections.some((id) => id.toString() === userId)) {
-      return res.status(200).json({ success: true, status: 'connected' });
+      return res.status(200).json({
+        success: true,
+        connectionStatus: { status: 'accepted' },
+      });
     }
 
     const request = await Connection.findOne({
@@ -163,15 +167,23 @@ export const getConnectionStatus = async (req, res) => {
         { sender: req.user._id, recipient: userId },
         { sender: userId, recipient: req.user._id },
       ],
-      status: 'pending',
-    });
+    }).sort({ createdAt: -1 });
 
-    const status = !request
-      ? 'not_connected'
-      : request.sender.toString() === req.user._id.toString()
-        ? 'pending_sent'
-        : 'pending_received';
-    return res.status(200).json({ success: true, status, requestId: request?._id });
+    if (!request) {
+      return res.status(200).json({ success: true, connectionStatus: null });
+    }
+
+    return res.status(200).json({
+      success: true,
+      connectionStatus: {
+        status: request.status,
+        direction:
+          request.sender.toString() === req.user._id.toString()
+            ? 'sent'
+            : 'received',
+        requestId: request._id,
+      },
+    });
   } catch (error) {
     console.error('Error getting connection status:', error);
     return res.status(500).json({ success: false, message: error.message });

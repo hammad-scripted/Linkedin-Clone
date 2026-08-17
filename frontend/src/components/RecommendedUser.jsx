@@ -120,6 +120,30 @@ const RecommendedUser = ({ user }) => {
 
     switch (connectionStatus?.status) {
       case 'pending':
+        if (connectionStatus.direction === 'received') {
+          return (
+            <div className="flex gap-2 justify-center">
+              <button
+                onClick={() =>
+                  acceptConnectionRequest(connectionStatus.requestId)
+                }
+                className="rounded-full p-1 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
+              >
+                <Check size={16} />
+              </button>
+
+              <button
+                onClick={() =>
+                  rejectConnectionRequest(connectionStatus.requestId)
+                }
+                className="rounded-full p-1 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          );
+        }
+
         return (
           <button
             className="px-3 py-1 rounded-full text-sm bg-yellow-500 text-white flex items-center"
@@ -130,30 +154,7 @@ const RecommendedUser = ({ user }) => {
           </button>
         );
 
-      case 'received':
-        return (
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() =>
-                acceptConnectionRequest(connectionStatus.requestId)
-              }
-              className="rounded-full p-1 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
-            >
-              <Check size={16} />
-            </button>
-
-            <button
-              onClick={() =>
-                rejectConnectionRequest(connectionStatus.requestId)
-              }
-              className="rounded-full p-1 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        );
-
-      case 'connected':
+      case 'accepted':
         return (
           <button
             className="px-3 py-1 rounded-full text-sm bg-green-500 text-white flex items-center"
