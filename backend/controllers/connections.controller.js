@@ -114,17 +114,21 @@ export const rejectConnectionRequest = async (req, res) => {
   }
 };
 
-export const getAllConnections = async (req, res) => {
+export const getConnectionRequests = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate(
-      'connections',
-      'username name profilePicture headline',
-    );
-    return res
-      .status(200)
-      .json({ success: true, connections: user.connections });
+    const connectionRequests = await Connection.find({
+      recipient: req.user._id,
+      status: 'pending',
+    })
+      .populate('sender', 'username name profilePicture headline')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      connections: connectionRequests,
+    });
   } catch (error) {
-    console.error('Error getting connections:', error);
+    console.error('Error getting connection requests:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -5,7 +5,7 @@ import {
   sendConnectionRequest,
   acceptConnectionRequest,
   rejectConnectionRequest,
-  getAllConnections,
+  getConnectionRequests,
   deleteConnection,
   getConnectionStatus,
   getUserConnections,
@@ -24,6 +24,6 @@ connectionRouter.put(
   rejectConnectionRequest,
 );
 connectionRouter.get('/', protectRoute, getUserConnections);
-connectionRouter.get('/requests', protectRoute, getAllConnections);
+connectionRouter.get('/requests', protectRoute, getConnectionRequests);
 connectionRouter.delete('/:userId', protectRoute, deleteConnection);
 connectionRouter.get('/status/:userId', protectRoute, getConnectionStatus);
