@@ -8,6 +8,7 @@ import {
   getAllConnections,
   deleteConnection,
   getConnectionStatus,
+  getUserConnections,
 } from '../controllers/connections.controller.js';
 export const connectionRouter = Router();
 
@@ -22,6 +23,7 @@ connectionRouter.put(
   protectRoute,
   rejectConnectionRequest,
 );
+connectionRouter.get('/', protectRoute, getUserConnections);
 connectionRouter.get('/requests', protectRoute, getAllConnections);
 connectionRouter.delete('/:userId', protectRoute, deleteConnection);
 connectionRouter.get('/status/:userId', protectRoute, getConnectionStatus);

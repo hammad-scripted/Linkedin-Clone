@@ -57,7 +57,9 @@ export const acceptConnectionRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
     if (request.recipient.toString() !== userId.toString()) {
-      return res.status(403).json({ message: 'You are not authorized to accept this request' });
+      return res
+        .status(403)
+        .json({ message: 'You are not authorized to accept this request' });
     }
     if (request.status !== 'pending') {
       return res.status(400).json({ message: 'Request is not pending' });
@@ -118,7 +120,9 @@ export const getAllConnections = async (req, res) => {
       'connections',
       'username name profilePicture headline',
     );
-    return res.status(200).json({ success: true, connections: user.connections });
+    return res
+      .status(200)
+      .json({ success: true, connections: user.connections });
   } catch (error) {
     console.error('Error getting connections:', error);
     return res.status(500).json({ success: false, message: error.message });
@@ -128,7 +132,9 @@ export const getAllConnections = async (req, res) => {
 export const deleteConnection = async (req, res) => {
   try {
     const { userId } = req.params;
-    const connected = req.user.connections.some((id) => id.toString() === userId);
+    const connected = req.user.connections.some(
+      (id) => id.toString() === userId,
+    );
     if (!connected) {
       return res.status(404).json({ message: 'Connection not found' });
     }
@@ -144,10 +150,27 @@ export const deleteConnection = async (req, res) => {
       }),
     ]);
 
-    return res.status(200).json({ success: true, message: 'Connection removed' });
+    return res
+      .status(200)
+      .json({ success: true, message: 'Connection removed' });
   } catch (error) {
     console.error('Error deleting connection:', error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+export const getUserConnections = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId).populate(
+      'connections',
+      'name username profilePicture headline connections',
+    );
+
+    res.json(user.connections);
+  } catch (error) {
+    console.error('Error in getUserConnections controller:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
