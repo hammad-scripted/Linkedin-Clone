@@ -100,20 +100,41 @@ export const deletePost = async (req, res) => {
   }
 };
 
+import mongoose from 'mongoose';
+
 export const getPostById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // 1. Guard against missing or literal "undefined"/"null" strings
+    if (!id || id === 'undefined' || id === 'null') {
+      return res
+        .status(400) // 400 Bad Request is more accurate than 404 here
+        .json({ success: false, message: 'Invalid or missing Post ID' });
+    }
+
+    // 2. Prevent Mongoose casting errors by validating the format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'Invalid Post ID format' });
+    }
+
+    // 3. Safe to query the database now
     const post = await Post.findById(id)
       .populate('author', 'username name profilePicture headline')
       .populate('comments.user', 'username name profilePicture headline');
+
     if (!post) {
       return res
         .status(404)
         .json({ success: false, message: 'Post not found' });
     }
+
     return res.status(200).json({ success: true, post });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Standardise the error response structure
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
