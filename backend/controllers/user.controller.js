@@ -31,7 +31,9 @@ export const getSuggestedConnections = async (req, res) => {
 export const getPublicProfile = async (req, res) => {
   try {
     const username = req.params.username;
-    const user = await User.findOne({ username }).select('-password');
+    const user = await User.findOne({ username }).select(
+      'name username profilePicture bannerImg headline location about skills experience education connections',
+    );
     if (!user) {
       return res
         .status(404)

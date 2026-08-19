@@ -41,6 +41,9 @@ const SkillsSection = ({ userData, isOwnProfile, onSave }) => {
     return (
         <div className='bg-white shadow rounded-lg p-6'>
             <h2 className='text-xl font-semibold mb-4'>Skills</h2>
+            {skills.length === 0 && !isEditing && (
+                <p className='mb-4 text-gray-500'>No skills added yet.</p>
+            )}
             <div className='flex flex-wrap'>
                 {skills.map((skill) => (
                     <span

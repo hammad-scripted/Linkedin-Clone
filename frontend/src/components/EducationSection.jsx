@@ -62,6 +62,9 @@ const EducationSection = ({ userData, isOwnProfile, onSave }) => {
     return (
         <div className='bg-white shadow rounded-lg p-6 mb-6'>
             <h2 className='text-xl font-semibold mb-4'>Education</h2>
+            {educations.length === 0 && !isEditing && (
+                <p className='mb-4 text-gray-500'>No education added yet.</p>
+            )}
             {educations.map((edu, index) => (
                 <div key={edu._id || `${edu.school}-${edu.fieldOfStudy}-${edu.startYear}-${index}`} className='mb-4 flex justify-between items-start'>
                     <div className='flex items-start'>
