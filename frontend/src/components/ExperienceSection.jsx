@@ -1,10 +1,11 @@
 import { Briefcase, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatDate } from "../utils/dateUtils";
 
 const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [experiences, setExperiences] = useState(userData.experience || []);
+    const [isSaving, setIsSaving] = useState(false);
     const [newExperience, setNewExperience] = useState({
         title: "",
         company: "",
@@ -14,9 +15,16 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
         currentlyWorking: false,
     });
 
+    useEffect(() => {
+        setExperiences(userData.experience || []);
+        setIsEditing(false);
+    }, [userData._id, userData.experience]);
+
     const handleAddExperience = () => {
-        if (newExperience.title && newExperience.company && newExperience.startDate) {
-            setExperiences([...experiences, newExperience]);
+        const title = newExperience.title.trim();
+        const company = newExperience.company.trim();
+        if (title && company && newExperience.startDate) {
+            setExperiences((current) => [...current, { ...newExperience, title, company }]);
 
             setNewExperience({
                 title: "",
@@ -29,13 +37,25 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
         }
     };
 
-    const handleDeleteExperience = (id) => {
-        setExperiences(experiences.filter((exp) => exp._id !== id));
+    const handleDeleteExperience = (indexToDelete) => {
+        setExperiences((current) => current.filter((_, index) => index !== indexToDelete));
     };
 
-    const handleSave = () => {
-        onSave({ experience: experiences });
-        setIsEditing(false);
+    const handleSave = async () => {
+        const experience = experiences.map(({ currentlyWorking, ...item }) => ({
+            ...item,
+            endDate: currentlyWorking ? null : item.endDate || null,
+        }));
+
+        setIsSaving(true);
+        try {
+            await onSave({ experience });
+            setIsEditing(false);
+        } catch {
+            // The page mutation reports the error and the editor stays open.
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCurrentlyWorkingChange = (e) => {
@@ -49,8 +69,8 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
     return (
         <div className='bg-white shadow rounded-lg p-6 mb-6'>
             <h2 className='text-xl font-semibold mb-4'>Experience</h2>
-            {experiences.map((exp) => (
-                <div key={exp._id} className='mb-4 flex justify-between items-start'>
+            {experiences.map((exp, index) => (
+                <div key={exp._id || `${exp.title}-${exp.company}-${exp.startDate}-${index}`} className='mb-4 flex justify-between items-start'>
                     <div className='flex items-start'>
                         <Briefcase size={20} className='mr-2 mt-1' />
                         <div>
@@ -63,7 +83,7 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
                         </div>
                     </div>
                     {isEditing && (
-                        <button onClick={() => handleDeleteExperience(exp._id)} className='text-red-500'>
+                        <button onClick={() => handleDeleteExperience(index)} className='text-red-500' aria-label='Delete experience'>
                             <X size={20} />
                         </button>
                     )}
@@ -108,6 +128,7 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
                             type='date'
                             placeholder='End Date'
                             value={newExperience.endDate}
+                            min={newExperience.startDate}
                             onChange={(e) => setNewExperience({ ...newExperience, endDate: e.target.value })}
                             className='w-full p-2 border rounded mb-2'
                         />
@@ -119,7 +140,9 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
                         className='w-full p-2 border rounded mb-2'
                     />
                     <button
+                        type='button'
                         onClick={handleAddExperience}
+                        disabled={!newExperience.title.trim() || !newExperience.company.trim() || !newExperience.startDate}
                         className='bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition duration-300'
                     >
                         Add Experience
@@ -132,9 +155,10 @@ const ExperienceSection = ({ userData, isOwnProfile, onSave }) => {
                     {isEditing ? (
                         <button
                             onClick={handleSave}
-                            className='mt-4 bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition duration-300'
+                            disabled={isSaving}
+                            className='mt-4 bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition duration-300 disabled:opacity-60'
                         >
-                            Save Changes
+                            {isSaving ? "Saving..." : "Save Changes"}
                         </button>
                     ) : (
                         <button

@@ -1,31 +1,47 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { axiosInstance } from "../lib/axios";
 import { toast } from "react-hot-toast";
 
 import { Camera, Clock, MapPin, UserCheck, UserPlus, X } from "lucide-react";
 
-const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
+const ProfileHeader = ({ userData, authUser, onSave, isOwnProfile }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedData, setEditedData] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
     const queryClient = useQueryClient();
 
-    const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+    useEffect(() => {
+        setIsEditing(false);
+        setEditedData({});
+    }, [userData._id]);
 
-    const { data: connectionStatus, refetch: refetchConnectionStatus } = useQuery({
+    const { data: connectionStatus, isLoading: isConnectionStatusLoading } = useQuery({
         queryKey: ["connectionStatus", userData._id],
-        queryFn: () => axiosInstance.get(`/connections/status/${userData._id}`),
+        queryFn: async () => {
+            const response = await axiosInstance.get(`/connections/status/${userData._id}`);
+            return response.data.connectionStatus;
+        },
         enabled: !isOwnProfile,
     });
 
-    const isConnected = userData.connections.some((connection) => connection === authUser._id);
+    const isConnected = (userData.connections || []).some((connection) => {
+        const connectionId = typeof connection === "object" ? connection._id : connection;
+        return String(connectionId) === String(authUser?._id);
+    });
+
+    const refreshConnectionData = () => {
+        queryClient.invalidateQueries({ queryKey: ["connectionStatus", userData._id] });
+        queryClient.invalidateQueries({ queryKey: ["connectionRequests"] });
+        queryClient.invalidateQueries({ queryKey: ["authUser"] });
+        queryClient.invalidateQueries({ queryKey: ["userProfile", userData.username] });
+    };
 
     const { mutate: sendConnectionRequest } = useMutation({
         mutationFn: (userId) => axiosInstance.post(`/connections/request/${userId}`),
         onSuccess: () => {
             toast.success("Connection request sent");
-            refetchConnectionStatus();
-            queryClient.invalidateQueries(["connectionRequests"]);
+            refreshConnectionData();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "An error occurred");
@@ -36,8 +52,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
         mutationFn: (requestId) => axiosInstance.put(`/connections/accept/${requestId}`),
         onSuccess: () => {
             toast.success("Connection request accepted");
-            refetchConnectionStatus();
-            queryClient.invalidateQueries(["connectionRequests"]);
+            refreshConnectionData();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "An error occurred");
@@ -48,8 +63,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
         mutationFn: (requestId) => axiosInstance.put(`/connections/reject/${requestId}`),
         onSuccess: () => {
             toast.success("Connection request rejected");
-            refetchConnectionStatus();
-            queryClient.invalidateQueries(["connectionRequests"]);
+            refreshConnectionData();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "An error occurred");
@@ -60,8 +74,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
         mutationFn: (userId) => axiosInstance.delete(`/connections/${userId}`),
         onSuccess: () => {
             toast.success("Connection removed");
-            refetchConnectionStatus();
-            queryClient.invalidateQueries(["connectionRequests"]);
+            refreshConnectionData();
         },
         onError: (error) => {
             toast.error(error.response?.data?.message || "An error occurred");
@@ -70,8 +83,11 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 
     const getConnectionStatus = useMemo(() => {
         if (isConnected) return "connected";
-        if (!isConnected) return "not_connected";
-        return connectionStatus?.data?.status;
+        if (connectionStatus?.status === "accepted") return "connected";
+        if (connectionStatus?.status === "pending") {
+            return connectionStatus.direction === "received" ? "received" : "pending";
+        }
+        return "not_connected";
     }, [isConnected, connectionStatus]);
 
     const renderConnectionButton = () => {
@@ -96,7 +112,7 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 
             case "pending":
                 return (
-                    <button className={`${baseClass} bg-yellow-500 hover:bg-yellow-600`}>
+                    <button disabled className={`${baseClass} bg-yellow-500 cursor-not-allowed`}>
                         <Clock size={20} className='mr-2' />
                         Pending
                     </button>
@@ -106,13 +122,13 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
                 return (
                     <div className='flex gap-2 justify-center'>
                         <button
-                            onClick={() => acceptRequest(connectionStatus.data.requestId)}
+                            onClick={() => acceptRequest(connectionStatus.requestId)}
                             className={`${baseClass} bg-green-500 hover:bg-green-600`}
                         >
                             Accept
                         </button>
                         <button
-                            onClick={() => rejectRequest(connectionStatus.data.requestId)}
+                            onClick={() => rejectRequest(connectionStatus.requestId)}
                             className={`${baseClass} bg-red-500 hover:bg-red-600`}
                         >
                             Reject
@@ -134,18 +150,32 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
 
     const handleImageChange = (event) => {
         const file = event.target.files[0];
+        const fieldName = event.target.name;
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                setEditedData((prev) => ({ ...prev, [event.target.name]: reader.result }));
+                setEditedData((prev) => ({ ...prev, [fieldName]: reader.result }));
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSave = () => {
-        onSave(editedData);
-        setIsEditing(false);
+    const handleSave = async () => {
+        if (editedData.name !== undefined && !editedData.name.trim()) {
+            toast.error("Name cannot be empty");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await onSave(editedData);
+            setEditedData({});
+            setIsEditing(false);
+        } catch {
+            // The page mutation displays the API error and keeps the editor open.
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -234,10 +264,11 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
                     isEditing ? (
                         <button
                             className='w-full bg-primary text-white py-2 px-4 rounded-full hover:bg-primary-dark
-                             transition duration-300'
+                             transition duration-300 disabled:opacity-60'
                             onClick={handleSave}
+                            disabled={isSaving}
                         >
-                            Save Profile
+                            {isSaving ? "Saving..." : "Save Profile"}
                         </button>
                     ) : (
                         <button
@@ -249,7 +280,9 @@ const ProfileHeader = ({ userData, onSave, isOwnProfile }) => {
                         </button>
                     )
                 ) : (
-                    <div className='flex justify-center'>{renderConnectionButton()}</div>
+                    <div className='flex justify-center'>
+                        {isConnectionStatusLoading ? <span>Loading connection...</span> : renderConnectionButton()}
+                    </div>
                 )}
             </div>
         </div>
