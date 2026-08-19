@@ -4,7 +4,7 @@
   "description": "A full-stack LinkedIn clone built with React, Express, and MongoDB",
   "main": "backend/src/server.js",
   "scripts": {
-    "build": "npm install --prefix frontend --no-audit --no-fund && npm run build --prefix frontend",
+    "build": "npm ci --prefix frontend --include=dev --no-audit --no-fund && npm run build --prefix frontend",
     "check": "npm run lint --prefix frontend && npm run build --prefix frontend",
     "dev": "nodemon ./backend/src/server.js",
     "start": "node ./backend/src/server.js"
