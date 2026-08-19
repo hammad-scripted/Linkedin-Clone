@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/layout/Layout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/auth/LoginPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import SignUpPage from './pages/auth/SignUpPage.jsx';
 import { Toaster, toast } from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -60,7 +61,7 @@ export default function App() {
             authUser ? <NetworkPage /> : <Navigate to="/login" replace />
           }
         />
-      </Routes>
+        <Route path="/profile/:username" element={authUser?<ProfilePage />:<Navigate to="/login" replace /> } />      </Routes>
       <Toaster />
     </Layout>
   );
