@@ -3,6 +3,7 @@ import cloudinary from '../lib/cloudinary.js';
 import { Notification } from '../models/notification.model.js';
 import { User } from '../models/user.model.js';
 import { sendCommentNotificationEmail } from '../emails/emailHandlers.js';
+import { getClientUrl } from '../lib/clientUrl.js';
 export const getFeedPosts = async (req, res) => {
   try {
     const feedAuthors = [...req.user.connections, req.user._id];
@@ -176,13 +177,12 @@ export const createComment = async (req, res) => {
 
       const postAuthor = await User.findById(post.author._id).select('email');
       if (postAuthor?.email) {
-        const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, '');
         try {
           await sendCommentNotificationEmail(
             postAuthor.email,
             post.author.name,
             req.user.name,
-            `${clientUrl}/post/${postId}`,
+            `${getClientUrl()}/post/${postId}`,
             comment.trim(),
           );
         } catch (emailError) {

@@ -2,6 +2,7 @@ import { Connection } from '../models/connection.model.js';
 import { Notification } from '../models/notification.model.js';
 import { User } from '../models/user.model.js';
 import { sendConnectionAcceptedEmail } from '../emails/emailHandlers.js';
+import { getClientUrl } from '../lib/clientUrl.js';
 
 export const sendConnectionRequest = async (req, res) => {
   try {
@@ -92,8 +93,7 @@ export const acceptConnectionRequest = async (req, res) => {
       { path: 'recipient', select: 'username name profilePicture headline' },
     ]);
 
-    const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, '');
-    const profileUrl = `${clientUrl}/profile/${req.user.username}`;
+    const profileUrl = `${getClientUrl()}/profile/${req.user.username}`;
     try {
       await sendConnectionAcceptedEmail(
         sender.email,

@@ -1,14 +1,12 @@
-import mongoose from "mongoose";
-import chalk from "chalk";
-export const connectDb=async () => {
+import mongoose from 'mongoose';
+import chalk from 'chalk';
 
-    try{
-        const connection=await mongoose.connect(process.env.MONGO_URI);
-        console.log(chalk.yellowBright.bold(`database connected ${connection.connection.host}`));
-    }
-    catch(error){
-        console.log(error); 
-        process.exit(1);
-    }
-    
-}
+export const connectDb = async () => {
+  const connection = await mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 15000,
+  });
+  console.log(
+    chalk.yellowBright.bold(`database connected ${connection.connection.host}`),
+  );
+  return connection;
+};

@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { signupSchema, signinSchema } from '../schemas/auth.schema.js';
 import { generateTokenAndSetCookie } from '../lib/token.js';
 import { sendWelcomeEmail } from '../emails/emailHandlers.js';
+import { getClientUrl } from '../lib/clientUrl.js';
 
 const withoutPassword = (user) => {
   const publicUser = user.toObject();
@@ -43,8 +44,7 @@ export const signup = async (req, res, next) => {
     //? generate jwt token and set the cookie
     await generateTokenAndSetCookie(user._id, res);
     //? send welcome email
-    const profileUrl =
-      process.env.CLIENT_URL + '/profile/' + user.username;
+    const profileUrl = `${getClientUrl()}/profile/${user.username}`;
     try {
       await sendWelcomeEmail(user.email, user.name, profileUrl);
     } catch (error) {
