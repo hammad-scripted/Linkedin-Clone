@@ -1,6 +1,8 @@
 import { Post } from '../models/post.model.js';
 import cloudinary from '../lib/cloudinary.js';
 import { Notification } from '../models/notification.model.js';
+import { User } from '../models/user.model.js';
+import { sendCommentNotificationEmail } from '../emails/emailHandlers.js';
 export const getFeedPosts = async (req, res) => {
   try {
     const feedAuthors = [...req.user.connections, req.user._id];
@@ -171,7 +173,25 @@ export const createComment = async (req, res) => {
         relatedUser: req.user._id,
         relatedPost: postId,
       });
-      //todo send email
+
+      const postAuthor = await User.findById(post.author._id).select('email');
+      if (postAuthor?.email) {
+        const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, '');
+        try {
+          await sendCommentNotificationEmail(
+            postAuthor.email,
+            post.author.name,
+            req.user.name,
+            `${clientUrl}/post/${postId}`,
+            comment.trim(),
+          );
+        } catch (emailError) {
+          console.error(
+            'Comment saved, but its email notification failed:',
+            emailError.message,
+          );
+        }
+      }
     }
 
     res.status(201).json({ success: true, post });

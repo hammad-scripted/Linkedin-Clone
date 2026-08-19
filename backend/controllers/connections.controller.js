@@ -1,6 +1,7 @@
 import { Connection } from '../models/connection.model.js';
 import { Notification } from '../models/notification.model.js';
 import { User } from '../models/user.model.js';
+import { sendConnectionAcceptedEmail } from '../emails/emailHandlers.js';
 
 export const sendConnectionRequest = async (req, res) => {
   try {
@@ -65,6 +66,11 @@ export const acceptConnectionRequest = async (req, res) => {
       return res.status(400).json({ message: 'Request is not pending' });
     }
 
+    const sender = await User.findById(request.sender).select('email name');
+    if (!sender) {
+      return res.status(404).json({ message: 'Request sender not found' });
+    }
+
     request.status = 'accepted';
     await Promise.all([
       request.save(),
@@ -85,6 +91,22 @@ export const acceptConnectionRequest = async (req, res) => {
       { path: 'sender', select: 'username name profilePicture headline' },
       { path: 'recipient', select: 'username name profilePicture headline' },
     ]);
+
+    const clientUrl = process.env.CLIENT_URL?.replace(/\/$/, '');
+    const profileUrl = `${clientUrl}/profile/${req.user.username}`;
+    try {
+      await sendConnectionAcceptedEmail(
+        sender.email,
+        sender.name,
+        req.user.name,
+        profileUrl,
+      );
+    } catch (emailError) {
+      console.error(
+        'Connection accepted, but its email notification failed:',
+        emailError.message,
+      );
+    }
 
     return res.status(200).json({ success: true, request });
   } catch (error) {

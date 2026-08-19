@@ -43,10 +43,10 @@ export const signup = async (req, res, next) => {
     //? generate jwt token and set the cookie
     await generateTokenAndSetCookie(user._id, res);
     //? send welcome email
-    const profilePictureUrl =
+    const profileUrl =
       process.env.CLIENT_URL + '/profile/' + user.username;
     try {
-      await sendWelcomeEmail(user.email, user.name, profilePictureUrl);
+      await sendWelcomeEmail(user.email, user.name, profileUrl);
     } catch (error) {
       console.log('Error sending email', error);
     }
